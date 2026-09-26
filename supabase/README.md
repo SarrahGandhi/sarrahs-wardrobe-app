@@ -2,7 +2,7 @@
 
 The local stack provides PostgreSQL, Auth, the REST API, Studio, and Mailpit.
 It does not require a hosted Supabase account. Storage is enabled for private wardrobe
-photos; Realtime and Edge Functions remain disabled. See [photo setup](PHOTOS.md).
+photos; Edge Functions are enabled for AI clothing analysis. Realtime remains disabled. See [photo setup](PHOTOS.md).
 
 ## Start and run
 
@@ -149,3 +149,9 @@ References: [Supabase React Native](https://supabase.com/docs/guides/auth/quicks
 [profile triggers](https://supabase.com/docs/guides/auth/managing-user-data),
 [PKCE](https://supabase.com/docs/guides/auth/sessions/pkce-flow), and
 [Expo protected routes](https://docs.expo.dev/router/advanced/protected/).
+
+AI clothing analysis uses a server-only secret and validates suggestions before review.
+See [AI_ANALYSIS.md](AI_ANALYSIS.md) for deployment and testing.
+
+Plan Outfit now saves manual outfit briefs with multiple owned starting pieces. Apply
+`20260926000400_plan_outfit_inputs.sql`; see [Plan Outfit setup](PLAN_OUTFIT.md).

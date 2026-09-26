@@ -4,6 +4,8 @@
 begin;
 
 -- Source: 20260925000100_profiles.sql
+begin;
+
 create table public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   display_name text not null default '' check (char_length(display_name) <= 100),
@@ -53,9 +55,12 @@ insert into public.profiles (id, display_name)
 select id, left(coalesce(raw_user_meta_data ->> 'display_name', ''), 100)
 from auth.users on conflict (id) do nothing;
 
+commit;
+
+
 -- Source: 20260926000100_wardrobe_and_outfits.sql
 -- Requires 20260925000100_profiles.sql. Apply once, in migration order.
-
+begin;
 
 create type public.wardrobe_category as enum
   ('top', 'bottom', 'dress', 'outerwear', 'shoes', 'bag', 'jewellery', 'accessory');
@@ -260,7 +265,12 @@ comment on column public.outfit_recommendation_items.role is 'Styling role can d
 comment on table public.saved_looks is 'Bookmark of a recommendation, not a frozen copy. Later edits to the recommendation or its pieces are reflected here.';
 comment on table public.outfit_feedback is 'One current editable feedback record per user and recommendation, not a wear-event log.';
 
+commit;
+
+
 -- Source: 20260926000200_wardrobe_images.sql
+begin;
+
 -- Persist the private object key, never an expiring signed URL.
 alter table public.wardrobe_items add column image_path text;
 alter table public.wardrobe_items add constraint wardrobe_image_owner_path check (
@@ -290,5 +300,89 @@ with check (bucket_id = 'wardrobe-images' and name ~ ('^' || (select auth.uid())
 create policy wardrobe_images_delete on storage.objects for delete to authenticated
 using (bucket_id = 'wardrobe-images' and (storage.foldername(name))[1] = (select auth.uid())::text
   and not exists (select 1 from public.wardrobe_items where image_path = storage.objects.name));
+
+commit;
+
+
+-- Source: 20260926000300_clothing_analysis_quota.sql
+begin;
+create schema if not exists private;
+create table private.clothing_analysis_quotas (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  window_start timestamptz not null default now(),
+  requests integer not null default 0 check (requests between 0 and 20)
+);
+alter table private.clothing_analysis_quotas enable row level security;
+revoke all on private.clothing_analysis_quotas from public, anon, authenticated;
+-- Atomic per-account limit, shared across Edge instances. Caller cannot reset its window.
+create function public.consume_clothing_analysis_quota() returns boolean
+language plpgsql security definer set search_path = '' as $$
+declare account_id uuid := auth.uid(); accepted uuid;
+begin
+  if account_id is null then raise exception 'Authentication required' using errcode = '42501'; end if;
+  insert into private.clothing_analysis_quotas as quota(user_id, window_start, requests)
+  values (account_id, now(), 1)
+  on conflict (user_id) do update set
+    window_start = case when quota.window_start <= now() - interval '1 hour' then now() else quota.window_start end,
+    requests = case when quota.window_start <= now() - interval '1 hour' then 1 else quota.requests + 1 end
+  where quota.window_start <= now() - interval '1 hour' or quota.requests < 20
+  returning user_id into accepted;
+  return accepted is not null;
+end;
+$$;
+revoke all on function public.consume_clothing_analysis_quota() from public, anon;
+grant execute on function public.consume_clothing_analysis_quota() to authenticated;
+commit;
+
+
+-- Source: 20260926000400_plan_outfit_inputs.sql
+-- Multiple owned starting pieces, plus the manually chosen indoor/outdoor setting.
+alter table public.outfit_plans add column setting text
+  check (setting in ('indoor', 'outdoor', 'both'));
+create table public.outfit_plan_items (
+  user_id uuid not null default auth.uid() references public.profiles(id) on delete cascade,
+  plan_id uuid not null,
+  wardrobe_item_id uuid not null,
+  created_at timestamptz not null default now(),
+  primary key (plan_id, wardrobe_item_id),
+  foreign key (user_id, plan_id) references public.outfit_plans(user_id, id) on delete cascade,
+  foreign key (user_id, wardrobe_item_id) references public.wardrobe_items(user_id, id) on delete no action
+);
+create index outfit_plan_items_owner_item_idx on public.outfit_plan_items(user_id, wardrobe_item_id);
+alter table public.outfit_plan_items enable row level security;
+revoke all on public.outfit_plan_items from public, anon, authenticated;
+grant select, insert, delete on public.outfit_plan_items to authenticated;
+grant all on public.outfit_plan_items to service_role;
+create policy owner_select on public.outfit_plan_items for select to authenticated using ((select auth.uid()) = user_id);
+create policy owner_insert on public.outfit_plan_items for insert to authenticated with check ((select auth.uid()) = user_id);
+create policy owner_delete on public.outfit_plan_items for delete to authenticated using ((select auth.uid()) = user_id);
+insert into public.outfit_plan_items(user_id, plan_id, wardrobe_item_id)
+  select user_id, id, anchor_item_id from public.outfit_plans where anchor_item_id is not null;
+
+-- A single transaction avoids partial plans; a stable client UUID makes retries safe.
+create function public.save_outfit_plan(
+  p_id uuid, p_occasion text, p_temperature_c numeric, p_weather_summary text,
+  p_setting text, p_instructions text, p_style_preferences text[], p_item_ids uuid[]
+) returns uuid language plpgsql security invoker set search_path = '' as $$
+declare item_id uuid;
+begin
+  if auth.uid() is null then raise exception 'Authentication required' using errcode = '42501'; end if;
+  if exists(select 1 from public.outfit_plans where id = p_id and user_id = auth.uid()) then return p_id; end if;
+  if p_item_ids is null or array_position(p_item_ids, null) is not null then
+    raise exception 'Invalid starting pieces' using errcode = '22023';
+  end if;
+  foreach item_id in array p_item_ids loop
+    if not exists(select 1 from public.wardrobe_items where id = item_id and user_id = auth.uid() and archived_at is null) then
+      raise exception 'Starting piece unavailable' using errcode = '22023';
+    end if;
+  end loop;
+  insert into public.outfit_plans(id, user_id, occasion, temperature_c, weather_summary, setting, instructions, style_preferences, anchor_item_id)
+  values(p_id, auth.uid(), btrim(p_occasion), p_temperature_c, p_weather_summary, p_setting, p_instructions, p_style_preferences, p_item_ids[1]);
+  insert into public.outfit_plan_items(user_id, plan_id, wardrobe_item_id)
+    select auth.uid(), p_id, selected_id from (select distinct unnest(p_item_ids) as selected_id) selected;
+  return p_id;
+end $$;
+revoke all on function public.save_outfit_plan(uuid,text,numeric,text,text,text,text[],uuid[]) from public, anon;
+grant execute on function public.save_outfit_plan(uuid,text,numeric,text,text,text,text[],uuid[]) to authenticated;
 
 commit;

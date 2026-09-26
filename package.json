@@ -44,7 +44,8 @@
     "test:auth": "node tests/auth.integration.mjs",
     "test:auth:unit": "node --test tests/auth.unit.mjs",
     "test:database": "node tests/database.integration.mjs",
-    "test:wardrobe": "node --test tests/wardrobe.unit.mjs tests/wardrobe-images.unit.mjs"
+    "test:wardrobe": "node --test tests/wardrobe.unit.mjs tests/wardrobe-images.unit.mjs",
+    "test:analysis": "node --test tests/clothing-analysis.unit.mjs"
   },
   "private": true
 }

@@ -31,7 +31,14 @@ export type Database = {
       };
     };
     Views: { [_ in never]: never };
-    Functions: { [_ in never]: never };
+    Functions: {
+      save_outfit_plan: {
+        Args: { p_id: string; p_occasion: string; p_temperature_c: number | null;
+          p_weather_summary: string | null; p_setting: string | null; p_instructions: string | null;
+          p_style_preferences: string[]; p_item_ids: string[] };
+        Returns: string;
+      };
+    };
     Enums: { [_ in never]: never };
     CompositeTypes: { [_ in never]: never };
   };

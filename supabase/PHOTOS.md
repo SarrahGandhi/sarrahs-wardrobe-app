@@ -25,7 +25,8 @@ store a private path and a legacy external image URL.
    previous selection. Camera denial offers an explanation and Settings when blocked.
 4. Tap Upload photo & continue. Images are converted to JPEG and reduced to at most
    1600 pixels on their longest edge (when source dimensions are available).
-5. Enter the piece's details and Save to wardrobe. The saved piece opens immediately;
+5. The app shows Analyzing item and requests editable AI suggestions (see AI_ANALYSIS.md).
+   If unavailable, enter details manually. Review the piece's details and Save to wardrobe. The saved piece opens immediately;
    the wardrobe tab reloads when focused again.
 
 Photos use Expo ImagePicker's system picker, so library selection does not request

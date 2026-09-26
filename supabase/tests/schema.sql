@@ -18,8 +18,8 @@ insert into auth.users(id, raw_user_meta_data) values
  ('00000000-0000-4000-8000-000000000001', '{"display_name":"Alice"}'),
  ('00000000-0000-4000-8000-000000000002', '{"display_name":"Bob"}');
 select pg_temp.assert_true((select count(*) = 2 from public.profiles), 'profile trigger');
-select pg_temp.assert_true((select count(*) = 7 from pg_class c join pg_namespace n on n.oid=c.relnamespace
-  where n.nspname='public' and c.relkind='r' and c.relrowsecurity), 'RLS enabled on all seven tables');
+select pg_temp.assert_true((select count(*) = 8 from pg_class c join pg_namespace n on n.oid=c.relnamespace
+  where n.nspname='public' and c.relkind='r' and c.relrowsecurity), 'RLS enabled on all eight tables');
 
 set role authenticated;
 select set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-000000000002', false);

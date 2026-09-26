@@ -22,5 +22,5 @@ export type OutfitPlan = {
   precipitation_probability: number | null; weather_summary: string | null;
   weather_observed_at: string | null; formality: WardrobeItem['formality'];
   style_preferences: string[]; preferred_colours: string[]; excluded_categories: WardrobeCategory[];
-  anchor_item_id: string | null; instructions: string | null; created_at: string; updated_at: string;
+  setting: 'indoor' | 'outdoor' | 'both' | null; anchor_item_id: string | null; instructions: string | null; created_at: string; updated_at: string;
 };

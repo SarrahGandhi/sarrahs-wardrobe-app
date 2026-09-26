@@ -51,7 +51,9 @@ detail/edit/delete actions, and an anchored outfit brief. See
 [wardrobe implementation](src/services/supabase/WARDROBE.md).
 Camera/photo-library item creation and private Storage uploads are implemented.
 See [photo setup and testing](supabase/PHOTOS.md).
-AI generation, weather, and profile editing remain future work.
+AI clothing analysis now suggests editable item attributes after upload. Enable it using
+[Edge Function setup](supabase/AI_ANALYSIS.md). Outfit generation, weather, and profile
+editing remain future work.
 
 Temporary UI fixtures live in `src/mocks/editorial.ts`; they are not user-owned records
 and are not persisted. Sample labels distinguish these previews from real saved looks.
@@ -203,3 +205,7 @@ are configured in `app.json`. Launcher artwork is still the Expo starter artwork
 
 Reference: [Expo Router installation](https://docs.expo.dev/router/installation/)
 and [Expo SDK 57](https://docs.expo.dev/versions/v57.0.0/).
+
+The Plan Outfit tab supports occasion, manual weather, preferences and multiple starting
+pieces from your wardrobe. Style Me validates and saves a plan; generation is not yet
+implemented. Apply the [Plan Outfit migration](supabase/PLAN_OUTFIT.md) to enable saving.
