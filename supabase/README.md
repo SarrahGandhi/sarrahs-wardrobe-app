@@ -53,6 +53,12 @@ shows a recovery message rather than admitting the user to private screens.
 
 ## Database
 
+The full wardrobe/outfit design, ownership rules, deployment instructions, and
+database tests are documented in [SCHEMA.md](SCHEMA.md). The additive migration is
+`migrations/20260926000100_wardrobe_and_outfits.sql`; a complete fresh-project SQL
+script is available at [sql/full_schema.sql](sql/full_schema.sql).
+
+
 `migrations/20260925000100_profiles.sql` creates:
 
 - `profiles`: `id`, `display_name`, nullable `avatar_url`, `created_at`, `updated_at`.
