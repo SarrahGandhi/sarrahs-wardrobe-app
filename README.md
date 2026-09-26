@@ -35,7 +35,7 @@ password reset, device networking, and the SQL migration.
 - Editorial Home with a greeting, photography hero, outfit-planning CTA, recent sample looks,
   and wardrobe / add-clothing shortcuts.
 - Shared sample look cards in Home and Saved, with navigable look previews.
-- An add-clothing modal that previews entry methods without activating uploads or camera access.
+- An add-clothing flow with camera/library selection, preview, private upload, and manual item details.
 - Shared theme tokens, accessible controls, responsive content width, wrapping text,
   and reusable loading, empty, and input-error states.
 - Top/side safe areas in screens, bottom safe areas owned by the tab navigator.
@@ -46,8 +46,12 @@ password reset, device networking, and the SQL migration.
 Authentication is implemented with Supabase: account creation, confirmation, login,
 logout, session persistence/refresh, password recovery, and protected navigation.
 A database trigger creates profiles; RLS restricts reads and updates to the owner.
-Wardrobe entry, outfit persistence, AI generation, weather, and profile editing
-remain outside this step.
+My Wardrobe now loads real user-owned items with search, category/favourite filters,
+detail/edit/delete actions, and an anchored outfit brief. See
+[wardrobe implementation](src/services/supabase/WARDROBE.md).
+Camera/photo-library item creation and private Storage uploads are implemented.
+See [photo setup and testing](supabase/PHOTOS.md).
+AI generation, weather, and profile editing remain future work.
 
 Temporary UI fixtures live in `src/mocks/editorial.ts`; they are not user-owned records
 and are not persisted. Sample labels distinguish these previews from real saved looks.

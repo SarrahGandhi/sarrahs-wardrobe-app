@@ -48,6 +48,7 @@ function AuthenticatedNavigation() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="add-clothing" options={{ presentation: "modal" }} />
         <Stack.Screen name="looks/[id]" />
+        <Stack.Screen name="wardrobe-items/[id]" />
       </Stack.Protected>
       <Stack.Protected guard={!session}>
         <Stack.Screen name="(auth)" />

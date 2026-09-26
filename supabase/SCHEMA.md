@@ -77,9 +77,10 @@ foreign-key lookups, and recommendation item ordering. GIN indexes support array
 on seasons and style tags. Unique keys already cover saved-look and feedback lookups.
 Additional indexes should follow observed queries rather than indexing every attribute.
 
-Image URLs do not grant storage access. This migration does not create storage buckets
-or policies. Use stable URLs; do not persist expiring signed URLs. A private upload feature
-should store a storage object path and issue signed URLs when displaying an image.
+The follow-up `20260926000200_wardrobe_images.sql` migration adds image_path and a
+private Storage bucket with ownership policies. New uploads persist object paths;
+signed display URLs expire after ten minutes. Legacy image_url rows remain supported.
+See [photo setup](PHOTOS.md).
 
 ## Apply the SQL
 
@@ -88,8 +89,8 @@ For the existing project where the profiles migration has already been applied, 
 or deploy it through the project's migration workflow. It is transactional and applies once.
 Do not drop/recreate the existing profiles table.
 
-For a fresh project, run both files in `migrations/` in timestamp order. Alternatively,
-paste the complete `sql/full_schema.sql` into SQL Editor. That file combines both migrations
+For a fresh project, run all files in `migrations/` in timestamp order. Alternatively,
+paste the complete `sql/full_schema.sql` into SQL Editor. That file combines all migrations
 in a single transaction; it is an alternative for fresh setup, not a third migration.
 Do not run the combined file on a project that already has these tables. When mixing
 manual SQL Editor setup with CLI migrations, reconcile migration history before pushing.
@@ -97,9 +98,9 @@ manual SQL Editor setup with CLI migrations, reconcile migration history before 
 No hosted migration is applied automatically by this task. Public app keys cannot perform
 schema migrations; use SQL Editor or an authorized database migration connection.
 
-This change defines persistence only. The current UI still uses sample outfit data, and
-`src/types/database.ts` currently covers profiles only. Generate expanded client types
-from the deployed schema when wiring the new tables into app services.
+My Wardrobe now uses the wardrobe_items table and saves anchored briefs to outfit_plans.
+The client types cover these tables and profiles. Recommendation and saved-look UI still
+uses sample outfit data; extend client types when wiring those services.
 
 ## Verification
 

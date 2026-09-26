@@ -1,8 +1,8 @@
 # Local Supabase and authentication
 
 The local stack provides PostgreSQL, Auth, the REST API, Studio, and Mailpit.
-It does not require a hosted Supabase account. Storage, Realtime, and Edge Functions
-are disabled until their application features are implemented.
+It does not require a hosted Supabase account. Storage is enabled for private wardrobe
+photos; Realtime and Edge Functions remain disabled. See [photo setup](PHOTOS.md).
 
 ## Start and run
 

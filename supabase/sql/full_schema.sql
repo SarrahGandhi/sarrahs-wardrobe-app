@@ -1,6 +1,6 @@
--- FRESH PROJECT ONLY. Includes profiles and wardrobe/outfit tables.
--- Existing projects with profiles: use only 20260926000100_wardrobe_and_outfits.sql.
--- Generated from the two migrations; do not apply this as an additional migration.
+-- FRESH SUPABASE PROJECT ONLY. Requires Supabase-managed Auth and Storage schemas.
+-- Existing projects: apply only migrations not already installed, in timestamp order.
+-- Generated from migrations; this is not an additional migration.
 begin;
 
 -- Source: 20260925000100_profiles.sql
@@ -259,5 +259,36 @@ comment on column public.outfit_recommendations.generation_metadata is 'Non-secr
 comment on column public.outfit_recommendation_items.role is 'Styling role can differ from the item category; multiple pieces may share a role.';
 comment on table public.saved_looks is 'Bookmark of a recommendation, not a frozen copy. Later edits to the recommendation or its pieces are reflected here.';
 comment on table public.outfit_feedback is 'One current editable feedback record per user and recommendation, not a wear-event log.';
+
+-- Source: 20260926000200_wardrobe_images.sql
+-- Persist the private object key, never an expiring signed URL.
+alter table public.wardrobe_items add column image_path text;
+alter table public.wardrobe_items add constraint wardrobe_image_owner_path check (
+  image_path is null or image_path ~ ('^' || user_id::text || '/[0-9a-f-]{36}\.jpg$')
+);
+alter table public.wardrobe_items add constraint wardrobe_image_source check (
+  image_path is null or image_url is null
+);
+create unique index wardrobe_items_image_path_idx on public.wardrobe_items(image_path) where image_path is not null;
+comment on column public.wardrobe_items.image_path is 'Private wardrobe-images bucket key: user UUID/photo UUID.jpg. Resolve with a short-lived signed URL.';
+
+insert into storage.buckets(id, name, public, file_size_limit, allowed_mime_types)
+values ('wardrobe-images', 'wardrobe-images', false, 5242880, array['image/jpeg'])
+on conflict (id) do update set public = false, file_size_limit = 5242880, allowed_mime_types = array['image/jpeg'];
+
+-- Restrictive guard keeps this bucket private even if another bucket has a broad
+-- permissive policy. It does not change access rules for other buckets.
+create policy wardrobe_images_owner_guard on storage.objects as restrictive for all to public
+using (bucket_id <> 'wardrobe-images' or (select auth.uid())::text = (storage.foldername(name))[1])
+with check (bucket_id <> 'wardrobe-images' or (select auth.uid())::text = (storage.foldername(name))[1]);
+
+create policy wardrobe_images_read on storage.objects for select to authenticated
+using (bucket_id = 'wardrobe-images' and (storage.foldername(name))[1] = (select auth.uid())::text);
+create policy wardrobe_images_insert on storage.objects for insert to authenticated
+with check (bucket_id = 'wardrobe-images' and name ~ ('^' || (select auth.uid())::text || '/[0-9a-f-]{36}\.jpg$'));
+-- Uploads use unique immutable paths. No UPDATE policy: clients cannot overwrite images.
+create policy wardrobe_images_delete on storage.objects for delete to authenticated
+using (bucket_id = 'wardrobe-images' and (storage.foldername(name))[1] = (select auth.uid())::text
+  and not exists (select 1 from public.wardrobe_items where image_path = storage.objects.name));
 
 commit;

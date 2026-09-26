@@ -1,3 +1,6 @@
+import { useLocalSearchParams } from "expo-router";
+import { useAuth } from "@/providers/AuthProvider";
+import { AnchoredPlan } from "@/components/wardrobe/AnchoredPlan";
 import { StyleSheet, View } from "react-native";
 import { PageHeading } from "@/components/PageHeading";
 import { AppText, Button, Card, Screen, SectionHeader } from "@/components/ui";
@@ -23,6 +26,8 @@ const steps = [
 ] as const;
 
 export function PlanOutfitScreen() {
+  const { anchorItemId } = useLocalSearchParams<{ anchorItemId?: string }>();
+  const { user } = useAuth();
   return (
     <Screen>
       <PageHeading
@@ -30,6 +35,7 @@ export function PlanOutfitScreen() {
         title="A look for your life"
         description="Good style starts with you. We’ll take it from there."
       />
+      {typeof anchorItemId === "string" && user ? <AnchoredPlan key={`${user.id}:${anchorItemId}`} id={anchorItemId} userId={user.id} /> : null}
       <Card>
         {steps.map((step) => (
           <View key={step.number} style={styles.step}>
