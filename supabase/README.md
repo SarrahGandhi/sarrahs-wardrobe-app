@@ -30,6 +30,36 @@ Test accounts created by `npm run test:auth` are removed afterward.
 `npm run supabase:stop` stops this project's stack and retains its database.
 Do not run `supabase db reset` against data you want to keep.
 
+## Seed a local demo wardrobe
+
+After starting the local stack, apply pending migrations and seed:
+
+```bash
+npx supabase@2.117.0 migration up --local
+npm run supabase:seed
+```
+
+Sign in with **demo@wardrobe.test** / **WardrobeDemo123!**. The script creates a
+confirmed local demo account, 22 clothing/accessory items with styling attributes,
+and a dinner plan requiring jeans and no heels. Matching demo product photos are
+uploaded from `scripts/seed-assets/wardrobe/` into private local Storage. Photos
+are approximate examples; their sources are recorded in that directory.
+Reruns insert only missing demo items and preserve existing edits and other users.
+The script verifies wardrobe access using the demo user's authenticated session.
+It reads credentials from local CLI status, refuses non-loopback API URLs, and
+never seeds the hosted project or writes admin keys into the mobile environment.
+`SUPABASE_CLI_PATH` can point to an already-installed CLI binary.
+
+To switch the app from hosted to local, preserve `.env` in a private backup outside the project directory
+(so Metro cannot try to bundle the backup), then run `npm run supabase:env -- --replace`. Set both public URL variables
+to the Mac's LAN address for a physical phone, and restart Expo. Local and hosted
+accounts are separate; use the demo credentials after switching.
+
+Seed data does not mock AI responses. Live outfit generation still requires a
+local Edge Function server with its own server-only `GROQ_API_KEY`; hosted
+Supabase secrets are not copied into the local environment. See
+[the outfit setup](OUTFIT_RECOMMENDATIONS.md).
+
 ## Phones and emulators
 
 The generated `.env` uses `127.0.0.1` for iOS Simulator and desktop web, and

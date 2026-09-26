@@ -1,0 +1,200 @@
+[
+  {
+    "name": "White cotton T-shirt",
+    "file": "white-cotton-t-shirt.jpg",
+    "source_product_id": "6687",
+    "source_product_name": "UCB Women's Basic Round Neck White T-shirt",
+    "source_url": "https://assets.myntassets.com/v1/images/style/properties/a99378706064903ad719a7e3e70dc654_images.jpg",
+    "dataset": "https://huggingface.co/datasets/ceyda/fashion-products-small",
+    "approximate_match": true
+  },
+  {
+    "name": "Cream linen shirt",
+    "file": "cream-linen-shirt.jpg",
+    "source_product_id": "34002",
+    "source_product_name": "Femella Women Cream Shirt",
+    "source_url": "https://assets.myntassets.com/v1/images/style/properties/c2c43df8e12ee211858f40bbe4b893c1_images.jpg",
+    "dataset": "https://huggingface.co/datasets/ceyda/fashion-products-small",
+    "approximate_match": true
+  },
+  {
+    "name": "Black ribbed tank",
+    "file": "black-ribbed-tank.jpg",
+    "source_product_id": "7068",
+    "source_product_name": "s.Oliver Women Black Tank  Top",
+    "source_url": "https://assets.myntassets.com/v1/images/style/properties/f27bfdf107afb69ad36c66ee59323d67_images.jpg",
+    "dataset": "https://huggingface.co/datasets/ceyda/fashion-products-small",
+    "approximate_match": true
+  },
+  {
+    "name": "Burgundy silk blouse",
+    "file": "burgundy-silk-blouse.jpg",
+    "source_product_id": "14723",
+    "source_product_name": "Scullers For Her Women Casual Shirt Maroon Shirts",
+    "source_url": "https://assets.myntassets.com/v1/images/style/properties/734e0d59a87e94af4ccdcebf95c2502b_images.jpg",
+    "dataset": "https://huggingface.co/datasets/ceyda/fashion-products-small",
+    "approximate_match": true
+  },
+  {
+    "name": "Navy wool sweater",
+    "file": "navy-wool-sweater.jpg",
+    "source_product_id": "18731",
+    "source_product_name": "Arrow Woman Georgina 2 Navy Blue Sweater",
+    "source_url": "https://assets.myntassets.com/v1/images/style/properties/a75e4b8b07c83de416d1baaee9c019ab_images.jpg",
+    "dataset": "https://huggingface.co/datasets/ceyda/fashion-products-small",
+    "approximate_match": true
+  },
+  {
+    "name": "Blue straight-leg jeans",
+    "file": "blue-straight-leg-jeans.jpg",
+    "source_product_id": "26993",
+    "source_product_name": "Jealous 21 Women Washed Blue Jeans",
+    "source_url": "https://assets.myntassets.com/v1/images/style/properties/6220c2b37ad0a42be62fb92b1d6c7e14_images.jpg",
+    "dataset": "https://huggingface.co/datasets/ceyda/fashion-products-small",
+    "approximate_match": true
+  },
+  {
+    "name": "Black wide-leg jeans",
+    "file": "black-wide-leg-jeans.jpg",
+    "source_product_id": "26994",
+    "source_product_name": "Jealous 21 Women Black Jeans",
+    "source_url": "https://assets.myntassets.com/v1/images/style/properties/Jealous-21-Women-Black-Jeans_6c38590b2ec56b444a760aa56a8ef7e9_images.jpg",
+    "dataset": "https://huggingface.co/datasets/ceyda/fashion-products-small",
+    "approximate_match": true
+  },
+  {
+    "name": "Beige tailored trousers",
+    "file": "beige-tailored-trousers.jpg",
+    "source_product_id": "27903",
+    "source_product_name": "Scullers For Her Beige Trousers",
+    "source_url": "https://assets.myntassets.com/v1/images/style/properties/7826191c99520fdfd348167449a71bdd_images.jpg",
+    "dataset": "https://huggingface.co/datasets/ceyda/fashion-products-small",
+    "approximate_match": true
+  },
+  {
+    "name": "Olive linen trousers",
+    "file": "olive-linen-trousers.jpg",
+    "source_product_id": "32562",
+    "source_product_name": "ONLY Women Olive Trousers",
+    "source_url": "https://assets.myntassets.com/v1/images/style/properties/ONLY-Women-Olive-Trousers_c1803c261bfd8cd0e7b07445932b4df7_images.jpg",
+    "dataset": "https://huggingface.co/datasets/ceyda/fashion-products-small",
+    "approximate_match": true
+  },
+  {
+    "name": "Black midi skirt",
+    "file": "black-midi-skirt.jpg",
+    "source_product_id": "25930",
+    "source_product_name": "Femella Women Black Skirt",
+    "source_url": "https://assets.myntassets.com/v1/images/style/properties/Femella-Women-Black-Skirt_5e84a3842431df0a2f3d9bd1baa56238_images.jpg",
+    "dataset": "https://huggingface.co/datasets/ceyda/fashion-products-small",
+    "approximate_match": true
+  },
+  {
+    "name": "Navy wrap midi dress",
+    "file": "navy-wrap-midi-dress.jpg",
+    "source_product_id": "40431",
+    "source_product_name": "Tonga Women Navy Blue Dress",
+    "source_url": "https://assets.myntassets.com/v1/images/style/properties/e229ad3c48766067460ae5811ed26dd6_images.jpg",
+    "dataset": "https://huggingface.co/datasets/ceyda/fashion-products-small",
+    "approximate_match": true
+  },
+  {
+    "name": "Green floral summer dress",
+    "file": "green-floral-summer-dress.jpg",
+    "source_product_id": "58002",
+    "source_product_name": "Latin Quarters Women Green Printed Dress",
+    "source_url": "https://assets.myntassets.com/v1/images/style/properties/Latin-Quarters-Women-Green-Dress_187652b358bd30be6df01e4313946c17_images.jpg",
+    "dataset": "https://huggingface.co/datasets/ceyda/fashion-products-small",
+    "approximate_match": true
+  },
+  {
+    "name": "Camel tailored blazer",
+    "file": "camel-tailored-blazer.jpg",
+    "source_product_id": "31732",
+    "source_product_name": "Reid & Taylor Men Brown Blazer",
+    "source_url": "https://assets.myntassets.com/v1/images/style/properties/16115eaf6f09b8b4c7d120c602ea4a2f_images.jpg",
+    "dataset": "https://huggingface.co/datasets/ceyda/fashion-products-small",
+    "approximate_match": true
+  },
+  {
+    "name": "Blue denim jacket",
+    "file": "blue-denim-jacket.jpg",
+    "source_product_id": "8478",
+    "source_product_name": "Forever New Women Vintage Blue Jackets",
+    "source_url": "https://assets.myntassets.com/v1/images/style/properties/d02da8fda6a0495027b99a35c99c29f6_images.jpg",
+    "dataset": "https://huggingface.co/datasets/ceyda/fashion-products-small",
+    "approximate_match": true
+  },
+  {
+    "name": "White flat sneakers",
+    "file": "white-flat-sneakers.jpg",
+    "source_product_id": "12702",
+    "source_product_name": "Nike Women Capri White Casual Shoes",
+    "source_url": "https://assets.myntassets.com/v1/images/style/properties/d965bc355228a50c27436e62a6971a91_images.jpg",
+    "dataset": "https://huggingface.co/datasets/ceyda/fashion-products-small",
+    "approximate_match": true
+  },
+  {
+    "name": "Black flat loafers",
+    "file": "black-flat-loafers.jpg",
+    "source_product_id": "33531",
+    "source_product_name": "Cobblerz Women Black Loafers",
+    "source_url": "https://assets.myntassets.com/v1/images/style/properties/3905cea42d5b2ccb5366a0a499b4866f_images.jpg",
+    "dataset": "https://huggingface.co/datasets/ceyda/fashion-products-small",
+    "approximate_match": true
+  },
+  {
+    "name": "Tan flat sandals",
+    "file": "tan-flat-sandals.jpg",
+    "source_product_id": "13550",
+    "source_product_name": "Carlton London Women Casual Tan Sandals",
+    "source_url": "https://assets.myntassets.com/v1/images/style/properties/1eda5b3e9fcb585cb58d162e083ba386_images.jpg",
+    "dataset": "https://huggingface.co/datasets/ceyda/fashion-products-small",
+    "approximate_match": true
+  },
+  {
+    "name": "Black high-heel pumps",
+    "file": "black-high-heel-pumps.jpg",
+    "source_product_id": "54127",
+    "source_product_name": "Rocia Women Black Heels",
+    "source_url": "https://assets.myntassets.com/v1/images/style/properties/50c7dd932d347768b05766e5dd231355_images.jpg",
+    "dataset": "https://huggingface.co/datasets/ceyda/fashion-products-small",
+    "approximate_match": true
+  },
+  {
+    "name": "Tan crossbody bag",
+    "file": "tan-crossbody-bag.jpg",
+    "source_product_id": "22562",
+    "source_product_name": "Lino Perros Tan Women Casual Sling Bag",
+    "source_url": "https://assets.myntassets.com/v1/images/style/properties/682180cb3dd20fed978c4afa6adf8312_images.jpg",
+    "dataset": "https://huggingface.co/datasets/ceyda/fashion-products-small",
+    "approximate_match": true
+  },
+  {
+    "name": "Black evening clutch",
+    "file": "black-evening-clutch.jpg",
+    "source_product_id": "25126",
+    "source_product_name": "Lino Perros Women Black Clutch",
+    "source_url": "https://assets.myntassets.com/v1/images/style/properties/Lino-Perros-Women-Black-Clutch_6f115c9093b30396ebc88ef6c4da9992_images.jpg",
+    "dataset": "https://huggingface.co/datasets/ceyda/fashion-products-small",
+    "approximate_match": true
+  },
+  {
+    "name": "Small gold hoop earrings",
+    "file": "small-gold-hoop-earrings.jpg",
+    "source_product_id": "Tqnxvv2fvAc",
+    "source_product_name": "A pair of gold hoop earrings on a white surface",
+    "source_url": "https://images.unsplash.com/photo-1632525231035-c054cd5019db?fm=jpg&w=800&fit=max&q=85",
+    "dataset": "https://unsplash.com/photos/a-pair-of-gold-hoop-earrings-on-a-white-surface-Tqnxvv2fvAc",
+    "approximate_match": true
+  },
+  {
+    "name": "Brown leather belt",
+    "file": "brown-leather-belt.jpg",
+    "source_product_id": "48112",
+    "source_product_name": "Fossil Women Brown Belt",
+    "source_url": "https://assets.myntassets.com/v1/images/style/properties/6e0e3cadb479ef0bcc1e7b328e14fdd7_images.jpg",
+    "dataset": "https://huggingface.co/datasets/ceyda/fashion-products-small",
+    "approximate_match": true
+  }
+]
