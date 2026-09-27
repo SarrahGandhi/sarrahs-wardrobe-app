@@ -1,3 +1,6 @@
+import { useOutfits } from '@/providers/OutfitProvider';
+import { OutfitResults } from '@/components/outfits/OutfitResults';
+import type { CompleteLook } from '@/types/outfit';
 import { useEffect, useRef, useState } from 'react';
 import { useLocalSearchParams } from 'expo-router';
 import { randomUUID } from 'expo-crypto';
@@ -15,11 +18,12 @@ import type { WardrobeItem } from '@/types/wardrobe';
 export function PlanOutfitScreen() {
   const { anchorItemId } = useLocalSearchParams<{ anchorItemId?: string }>();
   const { user } = useAuth();
-  return user ? <PlanForm key={`${user.id}:${anchorItemId ?? ''}`} userId={user.id} anchorItemId={anchorItemId} /> : null;
+  const outfits = useOutfits();
+  return user ? <PlanForm key={`${user.id}:${anchorItemId ?? ''}:${outfits.editVersion}`} userId={user.id} anchorItemId={anchorItemId || undefined} initial={anchorItemId ? null : outfits.edit} /> : null;
 }
-function PlanForm({ userId, anchorItemId }: { userId: string; anchorItemId?: string }) {
-  const [draft, setDraft] = useState<PlanDraft>({ occasion: '', description: '', temperature: '', condition: '', setting: null, instructions: '', preferences: [] });
-  const [items, setItems] = useState<WardrobeItem[]>([]);
+function PlanForm({ userId, anchorItemId, initial }: { userId: string; anchorItemId?: string; initial: CompleteLook | null }) {
+  const [draft, setDraft] = useState<PlanDraft>(initial?.draft ?? { occasion: '', description: '', temperature: '', condition: '', setting: null, instructions: '', preferences: [] });
+  const [items, setItems] = useState<WardrobeItem[]>(initial?.wardrobe.filter(item => initial.requiredIds.includes(item.id)) ?? []);
   const [picker, setPicker] = useState(false);
   const [busy, setBusy] = useState(false);
   const [resolvedAnchor, setResolvedAnchor] = useState<string | null>(null);
@@ -28,7 +32,8 @@ function PlanForm({ userId, anchorItemId }: { userId: string; anchorItemId?: str
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [result, setResult] = useState<OutfitResult | null>(null);
-  const [wardrobe, setWardrobe] = useState<WardrobeItem[]>([]);
+  const [looks, setLooks] = useState<CompleteLook[]>([]);
+  const outfits = useOutfits();
   const controller = useRef<AbortController | null>(null);
   useEffect(() => () => controller.current?.abort(), []);
   const requestId = useRef<string | null>(null);
@@ -47,8 +52,8 @@ function PlanForm({ userId, anchorItemId }: { userId: string; anchorItemId?: str
       .finally(() => { if (active) setResolvedAnchor(anchorItemId); });
     return () => { active = false; };
   }, [userId, anchorItemId]);
-  const submit = async () => {
-    if (lock.current || saved) return;
+  const submit = async (regenerate = false) => {
+    if (lock.current || (saved && !regenerate)) return;
     try { planInputs(draft); } catch (failure) { setError((failure as Error).message); return; }
     lock.current = true; setBusy(true); setError(null); setResult(null);
     try {
@@ -57,12 +62,17 @@ function PlanForm({ userId, anchorItemId }: { userId: string; anchorItemId?: str
       requestId.current ??= randomUUID();
       await saveOutfitPlan(requestId.current, draft, items.map(item => item.id));
       const generated = await recommendOutfits(userId, draft, items.map(item => item.id), active.signal);
-      if (!active.signal.aborted) { setResult(generated.result); setWardrobe(generated.wardrobe); setSaved(generated.result.status === 'ok'); }
+      if (!active.signal.aborted) { setResult(generated.result); setSaved(generated.result.status === 'ok');
+        if (generated.result.status === 'ok') {
+          const entries = generated.result.recommendations.map(look => ({ id: randomUUID(), planId: requestId.current!, look, wardrobe: generated.wardrobe, draft: { ...draft }, requiredIds: items.map(item => item.id), saved: false }));
+          outfits.add(entries); setLooks(entries);
+        } else if (regenerate) setError(generated.result.reason); }
     }
     catch (failure) { if (!controller.current?.signal.aborted) setError(failure instanceof Error ? failure.message : 'We couldn’t generate outfits. Please try again.'); }
     finally { lock.current = false; setBusy(false); }
   };
   const changeItems = (chosen: WardrobeItem[]) => { edited(); setItems(chosen); setAnchorError(null); setPicker(false); };
+  if (looks.length) return <OutfitResults entries={looks} busy={busy} error={error} onEdit={() => { setLooks([]); edited(); }} onRegenerate={() => void submit(true)} />;
   return <Screen>
     <PageHeading eyebrow="PLAN AN OUTFIT" title="What’s the occasion?" description="A little direction is all we need. Only the occasion is required." />
     <View style={styles.section}>
@@ -93,15 +103,6 @@ function PlanForm({ userId, anchorItemId }: { userId: string; anchorItemId?: str
     <View style={styles.section}>
       {error ? <AppText accessibilityRole="alert" accessibilityLiveRegion="polite">{error}</AppText> : null}
       {result?.status === 'impossible' ? <Card><AppText variant="heading">Let’s adjust the plan</AppText><AppText accessibilityLiveRegion="polite">{result.reason}</AppText></Card> : null}
-      {result?.recommendations.map(look => <Card key={look.title}>
-        <AppText variant="heading">{look.title}</AppText>
-        {look.items.map(part => <AppText key={part.wardrobe_item_id}>{wardrobe.find(item => item.id === part.wardrobe_item_id)?.name} · {part.role}</AppText>)}
-        <AppText variant="heading">Accessories</AppText>
-        {look.accessories.length ? look.accessories.map(part => <AppText key={part.wardrobe_item_id}>{wardrobe.find(item => item.id === part.wardrobe_item_id)?.name} · {part.role}</AppText>) : <AppText muted>Keep it simple — no accessories.</AppText>}
-        <AppText>Hair · {look.hairstyle}</AppText>
-        <AppText>Makeup · {look.makeup}</AppText>
-        <AppText>{look.why_this_works}</AppText>
-      </Card>)}
       <Button label={busy ? 'Styling your outfits…' : 'Style Me'} icon="sparkles-outline" style={{ minHeight: 60 }} loading={busy} disabled={saved || anchorLoading} onPress={() => void submit()} />
       <AppText variant="caption" muted>Three ways to wear your wardrobe, styled around your requirements.</AppText>
     </View>

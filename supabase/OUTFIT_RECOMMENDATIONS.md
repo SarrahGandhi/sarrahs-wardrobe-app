@@ -1,25 +1,35 @@
 # Outfit recommendations
 
-`Style Me` saves the plan, loads all active wardrobe pages (up to 500 items), and invokes the authenticated `recommend-outfits` Edge Function. Successful results are displayed in the planning screen. Recommendations are transient; this feature does not save generated looks.
+`Style Me` saves the plan, loads all active wardrobe pages (up to 500 items), and invokes the authenticated `recommend-outfits` Edge Function. Successful results are displayed in the planning screen. Tap a recommendation to view its Complete Look; Save Look adds it to the saved lookbook.
 
 ## Deployment
 
-Apply migrations with `npx supabase db push`, including `20260926000500_outfit_recommendation_quota.sql`, then deploy `recommend-outfits`.
+Apply `migrations/20260926000500_outfit_recommendation_quota.sql` in the hosted Supabase SQL Editor after the previous wardrobe and plan migrations (or use `npx supabase db push` for a linked project with migration history).
 
-Outfit generation defaults to **Groq**, using `openai/gpt-oss-120b` with strict JSON schema output. Groq has a rate-limited free plan; use a free-plan account to avoid paid usage. Create a key at https://console.groq.com/keys.
+In Supabase **Edge Functions → Secrets**, set `OUTFIT_AI_PROVIDER=gemini` and `GEMINI_API_KEY`.
+Then run from the project directory:
+
+```sh
+npx supabase login
+npx supabase functions deploy recommend-outfits --project-ref nmxvtnxrxvstzsntkbdr
+```
+
+Reload Expo and press Style Me. Keep JWT verification enabled; the function also checks the token with Supabase Auth.
+
+Outfit generation defaults to **Gemini 3.8 Flash** (`gemini-3.8-flash`), using the Gemini `generateContent` API with JSON Schema output. Create a key in [Google AI Studio](https://aistudio.google.com/apikey).
 
 For local development, set these in the git-ignored `supabase/functions/.env`:
 
 ```dotenv
-OUTFIT_AI_PROVIDER=groq
-GROQ_API_KEY=your-key
+OUTFIT_AI_PROVIDER=gemini
+GEMINI_API_KEY=your-key
 ```
 
-Run `npm run supabase:functions` and leave it running. Restart the command after changing secrets. For hosted deployment, configure those same values as Supabase Edge Function secrets. Never prefix a server key with `EXPO_PUBLIC_`. `GROQ_OUTFIT_MODEL` optionally overrides the Groq model and must support strict JSON schema and low reasoning effort.
+Run `npm run supabase:functions` and leave it running. Restart it after changing secrets. For hosted deployment, configure the same values as Supabase Edge Function secrets and deploy `recommend-outfits`. Never prefix a server key with `EXPO_PUBLIC_`. `GEMINI_OUTFIT_MODEL` optionally overrides the model with another Gemini model supporting JSON Schema outputs.
 
-There is **no automatic OpenAI fallback**. To explicitly restore OpenAI, set `OUTFIT_AI_PROVIDER=openai` and `OPENAI_API_KEY`; its optional model override is `OUTFIT_RECOMMENDATION_MODEL`. Clothing photo analysis still uses its existing OpenAI configuration; this switch applies to outfit recommendations only.
+A Gemini 503 capacity error waits 1–1.5 seconds, then retries once with Gemini 3.7 Flash under the same deadline when using the default model. Explicit model overrides are respected. There is no automatic fallback to another provider. Legacy Groq and OpenAI adapters require explicit `OUTFIT_AI_PROVIDER=groq` or `openai` and the corresponding server key. Clothing photo analysis retains its separate configuration in AI_ANALYSIS.md.
 
-Successful generation makes two provider calls (generation and requirements audit), each with a 40-second deadline. A Groq `json_validate_failed` rejection receives one automatic retry within that same deadline; a short HTTP 429 rate limit is retried once after the provider’s `retry-after` delay, up to 25 seconds within the same deadline. Long or repeated rate limits return an actionable error. Other request errors are not retried. The mobile invocation timeout is 110 seconds. The database permits 10 attempts per user per hour. Groq also enforces its own free-tier limits, which the app reports separately from the account limit. Authentication and provider failures use sanitized messages. Hosted secrets do not transfer to the local runtime.
+Successful generation makes two Gemini calls (generation and requirements audit), each with a 45-second deadline. The mobile invocation timeout is 110 seconds. The database permits 10 attempts per user per hour. Provider rate limits, blocked/incomplete responses and malformed JSON produce sanitized errors. Hosted secrets do not transfer to the local runtime.
 
 ## Contract
 
@@ -57,10 +67,10 @@ Unsatisfiable requirements return `{ "status": "impossible", "reason": "<actiona
 
 ## Validation and limits
 
-The function validates the Auth token and queries wardrobe rows through a caller-scoped Supabase client with RLS and an explicit owner filter. Client-supplied attributes are replaced with current database values. All returned clothing and accessory IDs, categories, duplicates, roles, titles, complete clothing combinations and required IDs are checked in code. Known “no heels” and “wear jeans” expressions receive additional deterministic checks. A separate AI pass checks broader natural-language constraints, suitability and prose for invented pieces. That audit retains the full styling request and the attributes of selected pieces only, reducing free-tier token usage. This semantic check is probabilistic and depends on accurate wardrobe metadata; it is not a formal guarantee for arbitrary language. Unknown attributes should result in an impossible response when compliance cannot be established.
+The function validates the Auth token and queries wardrobe rows through a caller-scoped Supabase client with RLS and an explicit owner filter. Client-supplied attributes are replaced with current database values. All returned clothing and accessory IDs, categories, duplicates, roles, titles, complete clothing combinations and required IDs are checked in code. Known “no heels”, “wear jeans” and “no jeans” expressions receive additional deterministic checks. Under “no heels”, footwear must have explicit flat/no-heel metadata (or be identified as sneakers/trainers); unknown heel heights fail validation. A separate AI pass checks broader natural-language constraints, suitability and prose for invented pieces. That audit retains the full styling request and the attributes of selected pieces only, reducing free-tier token usage. This semantic check is probabilistic and depends on accurate wardrobe metadata; it is not a formal guarantee for arbitrary language. Unknown attributes should result in an impossible response when compliance cannot be established.
 
 Before responding, the function re-reads the wardrobe and rejects changes to selected items during generation. The app also validates the result against its submitted wardrobe. Requests are capped at 750 KB, 500 active items and 20 required pieces; oversized wardrobes fail explicitly rather than silently truncating.
 
-`npm run test:outfits` exercises contracts, hard requirements, authorization boundaries, spoofed attributes, concurrent wardrobe changes, provider failures, quota handling and mobile pagination. Provider calls are mocked; live AI quality and deployed RLS/quota behavior require a configured Supabase environment.
+`npm run test:outfits` exercises contracts, hard requirements, authorization boundaries, spoofed attributes, concurrent wardrobe changes, provider failures, quota handling and mobile pagination. Provider calls are mocked. `npm run test:database` verifies quota isolation, expiry and tamper resistance in a disposable local PostgreSQL database. Live AI quality and hosted configuration still require a deployed environment.
 
-Groq uses [strict structured outputs](https://console.groq.com/docs/structured-outputs). See [free-plan rate limits](https://console.groq.com/docs/rate-limits). The optional OpenAI adapter uses the Responses API with `store: false`.
+Gemini references: [structured outputs](https://ai.google.dev/gemini-api/docs/structured-output), [generateContent API](https://ai.google.dev/api/generate-content), [Gemini 3.8 Flash](https://ai.google.dev/gemini-api/docs/models/gemini-3.8-flash).

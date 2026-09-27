@@ -1,3 +1,4 @@
+import type { RecommendationRow, SavedLookRow, RecommendationItemRow } from './outfit';
 import type { WardrobeItem, WardrobeEdit, OutfitPlan } from "./wardrobe";
 import type { UserProfile } from "./user";
 
@@ -5,6 +6,9 @@ import type { UserProfile } from "./user";
 export type Database = {
   public: {
     Tables: {
+      outfit_recommendations: { Row: RecommendationRow; Insert: RecommendationRow; Update: Partial<RecommendationRow>; Relationships: [] };
+      outfit_recommendation_items: { Row: RecommendationItemRow; Insert: RecommendationItemRow; Update: Partial<RecommendationItemRow>; Relationships: [] };
+      saved_looks: { Row: SavedLookRow; Insert: Pick<SavedLookRow, 'user_id' | 'outfit_recommendation_id'>; Update: Partial<SavedLookRow>; Relationships: [] };
       wardrobe_items: {
         Row: WardrobeItem;
         Insert: Partial<WardrobeItem> & Pick<WardrobeItem, "name" | "category">;

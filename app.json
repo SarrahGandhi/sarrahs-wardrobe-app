@@ -13,8 +13,8 @@
       [
         "expo-image-picker",
         {
-          "cameraPermission": "Allow Sarrah\u2019s Wardrobe to photograph your clothing.",
-          "photosPermission": "Allow Sarrah\u2019s Wardrobe to select clothing photos.",
+          "cameraPermission": "Allow Sarrah’s Wardrobe to photograph your clothing.",
+          "photosPermission": "Allow Sarrah’s Wardrobe to select clothing photos.",
           "microphonePermission": false
         }
       ]
@@ -23,7 +23,11 @@
       "typedRoutes": true
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.sarrahgandhi.sarrahswardrobeapp",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "softwareKeyboardLayoutMode": "resize",
@@ -33,11 +37,18 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.sarrahgandhi.sarrahswardrobeapp"
     },
     "web": {
       "bundler": "metro",
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "7c08dbf0-4e76-4f82-b493-0d244976c66f"
+      }
     }
   }
 }

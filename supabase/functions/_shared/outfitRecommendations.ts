@@ -82,9 +82,10 @@ export function validateOutfitResult(value: unknown, request: OutfitRequest): Ou
   }
   if (result.status !== 'ok' || result.recommendations.length !== 3) throw new Error('Expected three outfits');
   const wardrobe = new Map(request.available_wardrobe_items.map(item => [item.id, item]));
-  const styling = `${request.styling_request} ${request.custom_occasion_description} ${request.preference_chips.join(' ')}`;
-  const noHeels = /\b(no|without|avoid)\s+(high\s+)?heels\b/i.test(styling);
-  const wantsJeans = /\b(want to wear|must wear|wear|include)\s+(my\s+|some\s+)?jeans\b/i.test(styling) && !/\b(no|without|avoid|don't wear|do not wear|don't want to wear|do not want to wear)\s+jeans\b/i.test(styling);
+  const styling = `${request.styling_request} ${request.custom_occasion_description} ${request.preference_chips.join(' ')}`.replace(/[’‘]/g, "'");
+  const noHeels = /\b(no|without|avoid|don't wear|do not wear|don't want|do not want)\s+(?:any\s+)?(?:high\s+)?heels\b/i.test(styling);
+  const noJeans = /\b(no|without|avoid|don't wear|do not wear|don't want(?: to wear)?|do not want(?: to wear)?)\s+(?:any\s+)?jeans\b/i.test(styling);
+  const wantsJeans = /\b(want(?: to wear)?|must wear|wear|include)\s+(my\s+|some\s+)?jeans\b/i.test(styling) && !noJeans;
   for (const [index, raw] of result.recommendations.entries()) {
     const look = record(raw);
     exact(look, ['title', 'items', 'accessories', 'hairstyle', 'makeup', 'why_this_works']);
@@ -109,7 +110,12 @@ export function validateOutfitResult(value: unknown, request: OutfitRequest): Ou
     const hasHeels = (item: OutfitItem) => /\b(heels?|heeled|stilettos?|pumps|wedges)\b/i.test(
       description(item).replace(/\b(?:no|without|zero)\s+heels?\b|\bnon[- ]heeled\b|\bheel[- ]free\b/gi, ''));
     if (noHeels && selected.some(item => item.category === 'shoes' && hasHeels(item))) throw new Error('Heels forbidden');
-    if (wantsJeans && !selected.some(item => item.category === 'bottom' && /\bjeans\b/i.test(description(item)))) throw new Error('Jeans required');
+    // Unknown heel height is not evidence of compliance. The user can clarify metadata.
+    const confirmedFlat = (item: OutfitItem) => /\b(flat|flats|sneakers?|trainers?|no heels?|zero heels?)\b|\bnon[- ]heeled\b|\bheel[- ]free\b/i.test(description(item));
+    if (noHeels && selected.some(item => item.category === 'shoes' && !confirmedFlat(item))) throw new Error('Heel height unknown');
+    const jeans = selected.some(item => item.category === 'bottom' && /\bjeans\b/i.test(description(item)));
+    if (wantsJeans && !jeans) throw new Error('Jeans required');
+    if (noJeans && jeans) throw new Error('Jeans forbidden');
     if (!selected.some(item => item.category === 'dress') && !(selected.some(item => item.category === 'top') && selected.some(item => item.category === 'bottom'))) throw new Error('Incomplete outfit');
   }
   return value as OutfitResult;
@@ -122,5 +128,6 @@ export const aiErrorMessages: Record<string, string> = {
   ai_key_invalid: 'The outfit server’s AI key is invalid or lacks access. Check the server configuration.',
   ai_request_too_large: 'This wardrobe request exceeds the AI provider’s request limit. The outfit service needs a smaller request.',
   ai_request_rejected: 'The AI provider rejected the outfit request. The server configuration or request format needs checking.',
+  ai_temporarily_unavailable: 'Gemini is temporarily busy. Your outfit preferences are still here. Wait a moment, then try Style Me again.',
   ai_provider_failed: 'The AI provider is temporarily unavailable. Please try again later.',
 };

@@ -1,3 +1,4 @@
+import { OutfitProvider } from "@/providers/OutfitProvider";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import {
@@ -38,7 +39,7 @@ function AuthenticatedNavigation() {
       </Screen>
     );
   return (
-    <Stack
+    <OutfitProvider key={session?.user.id ?? "signed-out"}><Stack
       screenOptions={{
         headerShown: false,
         contentStyle: { backgroundColor: theme.colors.background },
@@ -48,6 +49,7 @@ function AuthenticatedNavigation() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="add-clothing" options={{ presentation: "modal" }} />
         <Stack.Screen name="looks/[id]" />
+        <Stack.Screen name="complete-look/[id]" />
         <Stack.Screen name="wardrobe-items/[id]" />
       </Stack.Protected>
       <Stack.Protected guard={!session}>
@@ -58,7 +60,7 @@ function AuthenticatedNavigation() {
       </Stack.Protected>
       <Stack.Screen name="auth/callback" />
       <Stack.Screen name="+not-found" />
-    </Stack>
+    </Stack></OutfitProvider>
   );
 }
 export default function RootLayout() {

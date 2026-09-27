@@ -185,3 +185,18 @@ See [AI_ANALYSIS.md](AI_ANALYSIS.md) for deployment and testing.
 
 Plan Outfit now saves manual outfit briefs with multiple owned starting pieces. Apply
 `20260926000400_plan_outfit_inputs.sql`; see [Plan Outfit setup](PLAN_OUTFIT.md).
+
+## Push local migrations to the hosted project
+
+This workspace is linked to `sarrah-wardrobe-app` (`nmxvtnxrxvstzsntkbdr`).
+The CLI uses your existing authenticated Supabase account; credentials are not stored in source files.
+
+- Preview pending migrations: `npm run supabase:push:preview`
+- Apply pending migrations: `npm run supabase:push`
+
+These commands sync migration files, not local user records or Storage images. They skip
+Vault configuration and seeds. Edge Functions are deployed separately with
+`npx supabase functions deploy <function-name> --project-ref nmxvtnxrxvstzsntkbdr`.
+Linking enables pushes from this workspace; it does not install a background watcher or GitHub deployment workflow.
+For a fresh checkout, run `npx supabase login` and
+`npx supabase link --project-ref nmxvtnxrxvstzsntkbdr` first.

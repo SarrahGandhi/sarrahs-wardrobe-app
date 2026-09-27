@@ -7,7 +7,7 @@ import NativeAbortController from 'abort-controller/dist/abort-controller.js';
 function load(file, imports = {}) {
   const { outputText } = ts.transpileModule(readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } });
   const exports = {};
-  runInNewContext(outputText, { exports, Request, Response, TextDecoder, AbortSignal, require: name => { assert.ok(name in imports, name); return imports[name]; } });
+  runInNewContext(outputText, { exports, Request, Response, TextDecoder, AbortSignal, setTimeout, clearTimeout, require: name => { assert.ok(name in imports, name); return imports[name]; } });
   return exports;
 }
 const contract = load('supabase/functions/_shared/outfitRecommendations.ts');
@@ -126,7 +126,8 @@ test('mobile distinguishes a missing deployment and server failures from a conne
   }
 });
 const groq = load('supabase/functions/recommend-outfits/groq.ts', { './openai.ts': provider });
-const routing = load('supabase/functions/recommend-outfits/provider.ts', { './openai.ts': provider, './groq.ts': groq });
+const gemini = load('supabase/functions/recommend-outfits/gemini.ts', { './openai.ts': provider });
+const routing = load('supabase/functions/recommend-outfits/provider.ts', { './openai.ts': provider, './groq.ts': groq, './gemini.ts': gemini });
 test('Groq sends strict JSON schema and server key, rejecting incomplete output', async () => {
   let sent;
   const fetcher = async (url, options) => { sent = { url, ...options }; return Response.json({ choices: [{ finish_reason: 'stop', message: { content: JSON.stringify(result()) } }] }); };
@@ -149,9 +150,9 @@ test('Groq failures propagate safe actionable codes without raw provider details
     assert.equal(body.error, code); assert.doesNotMatch(JSON.stringify(body), /secret provider details/);
   }
 });
-test('default provider is Groq with no automatic paid fallback', () => {
+test('default provider is Gemini with no automatic fallback', () => {
   assert.equal(routing.configuredOutfitProvider(name => ({ OPENAI_API_KEY: 'paid-key' })[name]), null);
-  assert.ok(routing.configuredOutfitProvider(name => ({ GROQ_API_KEY: 'free-key', OUTFIT_RECOMMENDATION_MODEL: 'old-openai-model' })[name]));
+  assert.ok(routing.configuredOutfitProvider(name => ({ GEMINI_API_KEY: 'gemini-key', OUTFIT_RECOMMENDATION_MODEL: 'old-openai-model' })[name]));
   assert.equal(routing.configuredOutfitProvider(name => ({ OUTFIT_AI_PROVIDER: 'unknown', GROQ_API_KEY: 'key' })[name]), null);
 });
 test('mobile shows the provider rate-limit message instead of the account hourly limit', async () => {
@@ -247,4 +248,99 @@ test('Groq never repeatedly retries rate limits or waits for daily limits', asyn
     }, async () => { waits++; }), error => error.code === 'ai_rate_limited');
     assert.equal(calls, value === '2' ? 2 : 1); assert.equal(waits, value === '2' ? 1 : 0);
   }
+});
+
+test('Gemini sends JSON schema and a server-only key to generateContent', async () => {
+  let sent;
+  const value = await gemini.geminiJSON(input, provider.instructions, contract.outfitSchema, 'server-secret', gemini.geminiDefaultModel, async (url, options) => {
+    sent = { url, ...options, body: JSON.parse(options.body) };
+    return Response.json({ candidates: [{ finishReason: 'STOP', content: { parts: [{ thought: true, text: 'ignore internal reasoning' }, { text: JSON.stringify(result()) }] } }] });
+  });
+  assert.equal(value.status, 'ok');
+  assert.equal(sent.url, `https://generativelanguage.googleapis.com/v1beta/models/${gemini.geminiDefaultModel}:generateContent`);
+  assert.equal(sent.headers['x-goog-api-key'], 'server-secret');
+  assert.equal(sent.url.includes('server-secret'), false);
+  assert.equal(sent.body.generationConfig.responseMimeType, 'application/json');
+  assert.equal(sent.body.generationConfig.thinkingConfig.thinkingLevel, 'low');
+  assert.equal(sent.body.generationConfig.maxOutputTokens, 16_384);
+  assert.deepEqual(sent.body.generationConfig.responseJsonSchema, JSON.parse(JSON.stringify(contract.outfitSchema)));
+  assert.equal(sent.body.systemInstruction.parts[0].text, provider.instructions);
+  assert.deepEqual(JSON.parse(sent.body.contents[0].parts[0].text), input);
+  assert.ok(sent.signal);
+});
+test('Gemini rejects blocked, truncated, empty, oversized and malformed output', async () => {
+  for (const payload of [
+    { promptFeedback: { blockReason: 'SAFETY' } },
+    { candidates: [{ finishReason: 'MAX_TOKENS', content: { parts: [{ text: '{}' }] } }] },
+    { candidates: [{ finishReason: 'STOP', content: { parts: [] } }] },
+    { candidates: [{ finishReason: 'STOP', content: { parts: [{ text: 'not json' }] } }] },
+    { candidates: [{ finishReason: 'STOP', content: { parts: [{ text: 'x'.repeat(30_001) }] } }] },
+  ]) await assert.rejects(gemini.geminiJSON(input, '', {}, 'key', gemini.geminiDefaultModel, async () => Response.json(payload)), error => error.code === 'ai_invalid_response');
+});
+test('Gemini failures expose safe error codes and never fall back to another provider', async () => {
+  for (const [status, code] of [[429, 'ai_rate_limited'], [403, 'ai_key_invalid'], [400, 'ai_request_rejected'], [404, 'ai_request_rejected'], [413, 'ai_request_too_large'], [500, 'ai_provider_failed']]) {
+    let calls = 0;
+    await assert.rejects(gemini.geminiJSON(input, '', {}, 'key', gemini.geminiDefaultModel, async () => {
+      calls++;
+      return Response.json({ error: { message: 'private provider data' } }, { status });
+    }), error => error.code === code && !error.message.includes('private'));
+    assert.equal(calls, 1);
+  }
+  assert.equal(routing.configuredOutfitProvider(name => ({ GROQ_API_KEY: 'other-key' })[name]), null);
+  assert.equal(routing.configuredOutfitProvider(name => ({ GEMINI_API_KEY: '  ' })[name]), null);
+  assert.ok(routing.configuredOutfitProvider(name => ({ OUTFIT_AI_PROVIDER: 'gemini', GEMINI_API_KEY: 'key', GEMINI_OUTFIT_MODEL: gemini.geminiDefaultModel })[name]));
+});
+
+test('Gemini retries capacity failures once with another Flash model and the same schema', async () => {
+  const calls = [];
+  const output = await gemini.geminiJSON(input, provider.instructions, contract.outfitSchema, 'key', gemini.geminiDefaultModel, async (url, options) => {
+    calls.push({ url, options });
+    return calls.length === 1 ? Response.json({ error: { message: 'busy' } }, { status: 503 })
+      : Response.json({ candidates: [{ finishReason: 'STOP', content: { parts: [{ text: JSON.stringify(result()) }] } }] });
+  });
+  assert.equal(output.status, 'ok');
+  assert.equal(calls.length, 2);
+  assert.match(calls[1].url, /gemini-3\.7-flash/);
+  assert.equal(calls[0].options.body, calls[1].options.body);
+  assert.equal(calls[0].options.signal, calls[1].options.signal);
+});
+test('Gemini does not override a deliberately selected model or retry non-capacity errors', async () => {
+  for (const [model, status] of [['gemini-3.7-flash', 503], [gemini.geminiDefaultModel, 429]]) {
+    let calls = 0;
+    await assert.rejects(gemini.geminiJSON(input, '', {}, 'key', model, async () => {
+      calls++;
+      return Response.json({}, { status });
+    }));
+    assert.equal(calls, 1);
+  }
+});
+
+test('hard requirements reject unknown heel heights and explicitly excluded jeans', () => {
+  const boots = { id: id(5), name: 'Black boots', category: 'shoes' };
+  const response = result(); response.recommendations.forEach(look => look.items.push(part(5)));
+  assert.throws(() => contract.validateOutfitResult(response, { ...input, available_wardrobe_items: [...wardrobe, boots] }), /Heel height unknown/);
+  contract.validateOutfitResult(response, { ...input, available_wardrobe_items: [...wardrobe, { ...boots, subcategory: 'Flat boots' }] });
+  assert.throws(() => contract.validateOutfitResult(result(), { ...input, styling_request: 'No jeans.' }), /Jeans forbidden/);
+  assert.throws(() => contract.validateOutfitResult(result(), { ...input, styling_request: 'I don’t want jeans.' }), /Jeans forbidden/);
+  const trousers = { ...wardrobe[0], name: 'Linen trousers' };
+  assert.throws(() => contract.validateOutfitResult(result(), { ...input, styling_request: 'I want jeans.', available_wardrobe_items: [trousers, ...wardrobe.slice(1)] }), /Jeans required/);
+});
+test('audit only accepts its exact boolean contract', async () => {
+  for (const verdict of [{ valid: true, extra: 'untrusted' }, { valid: 'true' }, null, []]) {
+    assert.equal(await provider.outfitProvider('key', 'model', async () => verdict).audit(input, result()), false);
+  }
+});
+
+
+test('exhausted Gemini capacity returns a specific temporary-unavailability code', async () => {
+  let calls = 0;
+  await assert.rejects(gemini.geminiJSON(input, '', {}, 'key', gemini.geminiDefaultModel, async () => {
+    calls++; return Response.json({}, { status: 503 });
+  }), error => error.code === 'ai_temporarily_unavailable');
+  assert.equal(calls, 2);
+  const response = await fixture({ generate: async () => { throw Object.assign(new Error('private'), { code: 'ai_temporarily_unavailable' }); } }).handle(request());
+  assert.equal(response.status, 503);
+  const payload = await response.json();
+  assert.match(payload.message, /temporarily busy/);
+  assert.doesNotMatch(payload.message, /not configured|private/);
 });

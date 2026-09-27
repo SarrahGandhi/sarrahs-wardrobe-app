@@ -49,7 +49,7 @@ export function createOutfitHandler(deps: OutfitDependencies) {
       if (!input.available_wardrobe_items.length) return reply(200, { status: 'impossible', reason: 'Add clothing to your wardrobe before generating outfits.', recommendations: [] });
       if (!deps.configured()) return fail(503, 'not_configured', 'Outfit generation is not configured yet.');
       stage = 'quota';
-      if (!await access.consumeQuota()) return fail(429, 'rate_limited', 'You have reached the hourly outfit limit. Try again later.');
+      if (!await access.consumeQuota()) return fail(429, 'rate_limited', 'You have used 10 outfit requests in this hour. Failed AI attempts count too; try again when the hour resets.');
       stage = 'provider';
       const generated = await deps.generate(input);
       stage = 'validation';

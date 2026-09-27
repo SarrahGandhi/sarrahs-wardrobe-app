@@ -42,11 +42,13 @@ try {
   sql(database, readFileSync('supabase/migrations/20260926000200_wardrobe_images.sql', 'utf8'));
   sql(database, readFileSync('supabase/migrations/20260926000300_clothing_analysis_quota.sql', 'utf8'));
   sql(database, readFileSync('supabase/migrations/20260926000400_plan_outfit_inputs.sql', 'utf8'));
+  sql(database, readFileSync('supabase/migrations/20260926000500_outfit_recommendation_quota.sql', 'utf8'));
   const output = sql(database, readFileSync('supabase/tests/schema.sql', 'utf8'));
   console.log(output.split('\n').filter(line => line.includes('PASS:')).join('\n').trim());
   console.log(sql(database, readFileSync('supabase/tests/storage.sql', 'utf8')).split('\n').filter(line => line.includes('PASS:')).join('\n').trim());
   console.log(sql(database, readFileSync('supabase/tests/analysis-quota.sql', 'utf8')).split('\n').filter(line => line.includes('PASS:')).join('\n').trim());
   console.log(sql(database, readFileSync('supabase/tests/outfit-plans.sql', 'utf8')).split('\n').filter(line => line.includes('PASS:')).join('\n').trim());
+  console.log(sql(database, readFileSync('supabase/tests/outfit-quota.sql', 'utf8')).split('\n').filter(line => line.includes('PASS:')).join('\n').trim());
   // Repeat against the copy/paste fresh-project artifact inside this disposable DB.
   sql(database, 'drop schema private cascade; drop schema storage cascade; drop schema public cascade; delete from auth.users; create schema public; grant usage on schema public to authenticated, anon, service_role;');
   sql(database, storageBootstrap);
@@ -55,6 +57,7 @@ try {
   sql(database, readFileSync('supabase/tests/storage.sql', 'utf8'));
   sql(database, readFileSync('supabase/tests/analysis-quota.sql', 'utf8'));
   sql(database, readFileSync('supabase/tests/outfit-plans.sql', 'utf8'));
+  sql(database, readFileSync('supabase/tests/outfit-quota.sql', 'utf8'));
   console.log('Combined fresh-project SQL: ' + freshOutput.split('\n').filter(line => line.includes('PASS:')).join('\n').trim());
 } catch (error) {
   console.error(error.stderr?.toString() || error.message);

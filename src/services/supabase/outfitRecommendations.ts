@@ -36,7 +36,7 @@ export async function recommendOutfits(userId: string, draft: PlanDraft, require
       502: 'The outfit service couldn’t generate valid recommendations. Please try again.',
       401: 'Sign in again to generate outfits.', 409: 'Your wardrobe changed. Refresh your selected pieces and try again.',
       422: 'We couldn’t satisfy every requirement. Adjust your request or try again.',
-      429: 'You’ve reached the hourly outfit limit. Try again later.', 503: 'Outfit generation is not configured yet.',
+      429: 'You have used 10 outfit requests this hour. Failed AI attempts count too; try again when the hour resets.', 503: 'Outfit generation is not configured yet.',
     };
     let providerCode: unknown;
     try {

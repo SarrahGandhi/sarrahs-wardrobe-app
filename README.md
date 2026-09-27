@@ -9,10 +9,13 @@ Use Node.js 22.13 or newer (an LTS release is recommended) and npm.
 
 ```bash
 npm ci
-npm run supabase:start
-npm run supabase:env   # first setup only; .env already exists in this workspace
 npm start
 ```
+
+The app uses hosted Supabase through the ignored `.env` file, already configured
+in this workspace. For a fresh checkout, copy `.env.example` to `.env` and set
+your hosted project's URL and public publishable key. Leave the Android URL
+override empty so every platform uses the hosted project.
 
 Scan the QR code with an SDK 57-compatible Expo Go installation. Your phone and
 computer should be on the same network. Alternatively:
@@ -24,9 +27,9 @@ npm run web      # optional browser preview
 ```
 
 If your Expo Go version doesn't support SDK 57, use a compatible Expo Go version
-or a development build. Local Supabase public configuration is stored in the ignored `.env`.
+or a development build. After changing `.env`, fully reload the app.
 See [authentication setup and verification](supabase/README.md) for email confirmation,
-password reset, device networking, and the SQL migration.
+password reset, optional local Supabase setup, and the SQL migration.
 
 ## What's implemented
 

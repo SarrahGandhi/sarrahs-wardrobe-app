@@ -34,8 +34,8 @@
   },
   "scripts": {
     "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "lint": "expo lint",
@@ -49,7 +49,9 @@
     "test:database": "node tests/database.integration.mjs",
     "test:wardrobe": "node --test tests/wardrobe.unit.mjs tests/wardrobe-images.unit.mjs",
     "test:outfits": "node --test tests/outfit-plan.unit.mjs tests/outfit-recommendations.unit.mjs",
-    "test:analysis": "node --test tests/clothing-analysis.unit.mjs"
+    "test:analysis": "node --test tests/clothing-analysis.unit.mjs",
+    "supabase:push:preview": "supabase db push --linked --dry-run --skip-vault",
+    "supabase:push": "supabase db push --linked --skip-vault"
   },
   "private": true
 }
